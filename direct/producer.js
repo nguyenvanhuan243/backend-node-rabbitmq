@@ -1,28 +1,35 @@
-const amqp = require("amqplib");
-const CONFIG = require('../config/index');
+import amqp from 'amqplib';
+import CONFIG from '../config/index.js';
 
-function publisher(EXCHANGE, PAYLOAD, cb) {
+const publisher = (EXCHANGE, PAYLOAD, cb) => {
   try {
-    producer = amqp.connect(CONFIG.RBMQ.SERVER);
-    producer.then(function (conn) {
-      return conn.createConfirmChannel().then(function (ch) {
+    const producer = amqp.connect(CONFIG.RBMQ.SERVER);
+    producer.then(conn => {
+      return conn.createConfirmChannel().then(ch => {
         ch.assertExchange(EXCHANGE, 'direct', {
           durable: true,
           autoDelete: false
         });
-        //assigning blank string to exchange is to use the default exchange, where queue name is the routing key
-        ch.publish('', CONFIG.RBMQ.ROUTING.T_VALIDATE_JSON, content = new Buffer.from(PAYLOAD), options = { contentType: "text/plain" }, function (err, ok) {
-          if (err != null) {
-            console.error("Error: failed to send message\n" + err);
-            cb(err);
-          } else {
-            cb(null);
-            conn.close();
-            // console.log('<<OK>>', ok); // TODO: log!
+        
+        // Assigning blank string to exchange is to use the default exchange, where queue name is the routing key
+        ch.publish(
+          '',
+          CONFIG.RBMQ.ROUTING.T_VALIDATE_JSON,
+          Buffer.from(PAYLOAD), // Updated to use Buffer.from directly
+          { contentType: "text/plain" }, // Options as a separate argument
+          (err, ok) => {
+            if (err != null) {
+              console.error("Error: failed to send message\n" + err);
+              cb(err);
+            } else {
+              cb(null);
+              conn.close();
+              // console.log('<<OK>>', ok); // TODO: log!
+            }
           }
-        });
+        );
       });
-    }).then(null, function (err) {
+    }).catch(err => {
       console.error('<<<<<< In then callback error => >>>>>> ', err);
       cb(err);
     });
@@ -30,6 +37,6 @@ function publisher(EXCHANGE, PAYLOAD, cb) {
     console.error('<<<<<< In try catch callback error => >>>>>> ', error);
     cb(error);
   }
-}
+};
 
-module.exports = publisher;
+export default publisher;
