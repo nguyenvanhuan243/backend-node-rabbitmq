@@ -1,20 +1,26 @@
 # RabbitMQ NodeJS - Basics, Direct and Topic based
 
-### Running Application
+## Running Application
 
-1. One to One (Direct)
+1. Start app node
 
-    > Under roor directory
+```
+yarn start
+```
 
-    > cd direct
+2. Start consumer
 
-    > node index.js
+```
+yarn run start-consumer
+```
 
-    > node consumer.js
+3. Start consumer
 
-Call api to produce
-1. Use postman
-2. Use node api_calls.js
+```
+yarn run start-producer
+```
+
+## Can use postmain or curl to call api
 
 ```console
 curl --location --request POST 'http://localhost:3343/api/v1/save' \
