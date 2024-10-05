@@ -1,7 +1,7 @@
 import express from 'express';
 import { json } from 'express';
-import config from '../config/index.js';
-import producer from './producer.js';
+import config from './config/index.js';
+import producer from './direct/producer.js';
 import amqp from 'amqplib';
 
 const APP = express();
