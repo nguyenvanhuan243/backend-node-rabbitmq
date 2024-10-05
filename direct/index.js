@@ -1,11 +1,14 @@
-const EXPRESS = require('express');
-const APP = EXPRESS();
-const CONFIG = require('../config/index');
-const CORE = require('./producer');
-const PORT = CONFIG.NODE_PORT;
+import express from 'express';
+import { json } from 'express';
+import config from '../config/index.js';
+import producer from './producer.js';
+import amqp from 'amqplib';
+
+const APP = express();
+const PORT = config.NODE_PORT;
 let count = 0;
 
-APP.use(EXPRESS.json());
+APP.use(json());
 
 // Health check endpoint
 APP.get('/', (req, res) => {
@@ -25,12 +28,11 @@ APP.post('/api/v1/save', (req, res) => {
   try {
     req.body = { name: 'api_c1 - ' + count, timestamp: new Date(), metric: false };
     const _payLoad = JSON.stringify(req.body);
-    CORE(CONFIG.RBMQ.EXCHANGE.C_VALIDATE_JSON, _payLoad, function (err, success) {
+    producer(config.RBMQ.EXCHANGE.C_VALIDATE_JSON, _payLoad, (err, success) => {
       if (err) {
         res.send(err);
       } else {
-        res.status(200);
-        res.send({
+        res.status(200).send({
           code: 200,
           message: 'Data received',
           data: success
@@ -38,8 +40,7 @@ APP.post('/api/v1/save', (req, res) => {
       }
     });
   } catch (e) {
-    res.status(400);
-    res.send({
+    res.status(400).send({
       code: 400,
       message: 'Bad request',
     });
@@ -47,15 +48,18 @@ APP.post('/api/v1/save', (req, res) => {
 });
 
 APP.post('/api/v1/delete', (req, res) => {
-  const amqp = require("amqplib");
-  const CONFIG = require('../config/index');
-  admin = amqp.connect(CONFIG.RBMQ.SERVER);
-  admin.then(function (conn) {
+  const admin = amqp.connect(config.RBMQ.SERVER);
+  admin.then((conn) => {
+    // You can handle the connection here
+  }).catch((err) => {
+    console.error('Failed to connect to RabbitMQ', err);
+    res.status(500).send({
+      code: 500,
+      message: 'Internal Server Error',
+    });
   });
 });
 
 APP.listen(PORT, () => {
-  // require('http').globalAgent.maxSockets = 100000;
-  // console.log(http.globalAgent.maxSockets); // TODO: log!
   console.log(`Node Server running at: http://localhost:${PORT}/`);
 });
